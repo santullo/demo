@@ -1,5 +1,6 @@
 package com.example.demo.entities;
 
+import com.example.demo.enums.SimNaoEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,16 +25,16 @@ public class Usuario implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(generator = "uuid4")
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(name = "nome_completo")
     private String nomeCompleto;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", unique = true, nullable = false)
     private String email;
 
-    @Column(name = "username", nullable = false, length = 50)
+    @Column(name = "username", unique = true, nullable = false, length = 50)
     private String username;
 
     @Column(name = "senha", nullable = false)
@@ -43,7 +44,12 @@ public class Usuario implements Serializable {
     @Column(name = "criado_em")
     private LocalDateTime criadoEm;
 
-    @Column(name = "cpf", nullable = false, length = 11)
+    @Column(name = "cpf", unique = true, nullable = false, length = 11)
     private String cpf;
+
+    @ColumnDefault("'S'")
+    @Column(name = "ativo", nullable = false, length = 1)
+    @Convert(converter = SimNaoEnum.Mapeador.class)
+    private SimNaoEnum ativo;
 
 }

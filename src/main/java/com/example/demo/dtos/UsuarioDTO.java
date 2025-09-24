@@ -1,5 +1,6 @@
 package com.example.demo.dtos;
 
+import com.example.demo.enums.SimNaoEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,4 +25,5 @@ public class UsuarioDTO implements Serializable {
     private String username;
     private LocalDateTime criadoEm;
     private String cpf;
+    private SimNaoEnum ativo;
 }
