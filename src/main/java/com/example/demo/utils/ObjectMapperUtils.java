@@ -10,7 +10,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ObjectMapperUtils {
 
-    private static final ModelMapper modelMapper = new ModelMapper();
+    private static final ModelMapper modelMapper;
+
+    static {
+        modelMapper = new ModelMapper();
+    }
 
     public static <D, T> T map(D source, Class<T> targetClass) {
         return modelMapper.map(source, targetClass);
