@@ -2,7 +2,7 @@ package com.example.demo.services;
 
 import com.example.demo.dtos.UsuarioDTO;
 import com.example.demo.entities.Usuario;
-import com.example.demo.enums.SimNaoEnum;
+import com.example.demo.enums.AtivoInativoEnum;
 import com.example.demo.records.UsuarioLoginRecord;
 import com.example.demo.records.UsuarioRecord;
 import com.example.demo.repositories.UsuarioRepository;
@@ -10,6 +10,7 @@ import com.example.demo.utils.ObjectMapperUtils;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@SuppressWarnings({"unchecked", "unused"})
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
@@ -32,7 +34,7 @@ public class UsuarioService {
             return converterListaParaDTO(usuarioRepository.findByStatus(ativo));
         }
 
-        return ObjectMapperUtils.mapAll(usuarioRepository.findAll(Sort.by(Sort.Direction.ASC, "nomeCompleto")), UsuarioDTO.class);
+        return converterListaParaDTO(usuarioRepository.findAll(Sort.by(Sort.Direction.ASC, "nomeCompleto")));
     }
 
     public UsuarioDTO consultarUsuarioDTOPorID(UUID id) throws Exception {
@@ -43,7 +45,6 @@ public class UsuarioService {
         return consultarPorId(id, false);
     }
 
-    @SuppressWarnings("unchecked")
     public <T> T consultarPorId(UUID id, boolean isDTO) throws Exception {
         return usuarioRepository.findById(id).map(usuario -> {
             if (isDTO) {
@@ -54,7 +55,7 @@ public class UsuarioService {
         }).orElseThrow(() -> new Exception("Não foi possível encontrar o usuário com o ID: " + id));
     }
 
-    public Usuario consultarPorUsernameOrEmail(String login) {
+    public UserDetails consultarPorUsernameOrEmail(String login) {
         return usuarioRepository.findByUsernameOrEmail(login).orElse(null);
     }
 
@@ -65,33 +66,31 @@ public class UsuarioService {
     }
 
     @Transactional(rollbackOn = Exception.class)
-    @SuppressWarnings("unused")
     public UsuarioDTO alterar(UsuarioDTO usuarioDTO) throws Exception {
         Usuario usuario = consultarUsuarioPorID(usuarioDTO.getId());
         usuario.setNomeCompleto(usuarioDTO.getNomeCompleto());
         usuario.setEmail(usuarioDTO.getEmail());
         usuario.setCpf(usuarioDTO.getCpf());
         usuario.setUsername(usuarioDTO.getUsername());
-        usuario.setAtivo(usuarioDTO.getAtivo());
+        usuario.setStatus(usuarioDTO.getStatus());
 
         return converterParaDTO(usuarioRepository.save(usuario));
     }
 
     @Transactional(rollbackOn = Exception.class)
-    @SuppressWarnings("unused")
     public void alterarStatusUsuario(UsuarioDTO usuarioDTO) throws Exception {
         Usuario usuario = consultarUsuarioPorID(usuarioDTO.getId());
-        if (SimNaoEnum.SIM.equals(usuarioDTO.getAtivo())) {
-            usuario.setAtivo(SimNaoEnum.NAO);
+        if (AtivoInativoEnum.ATIVO.equals(usuarioDTO.getStatus())) {
+            usuario.setStatus(AtivoInativoEnum.INATIVO);
         } else {
-            usuario.setAtivo(SimNaoEnum.SIM);
+            usuario.setStatus(AtivoInativoEnum.ATIVO);
         }
         usuarioRepository.save(usuario);
     }
 
     @Transactional(rollbackOn = Exception.class)
     public void alterarSenha(UsuarioLoginRecord usuarioLoginRecord) {
-        Usuario usuario = consultarPorUsernameOrEmail(usuarioLoginRecord.login());
+        Usuario usuario = (Usuario) consultarPorUsernameOrEmail(usuarioLoginRecord.login());
         usuario.setSenha(new BCryptPasswordEncoder().encode(usuarioLoginRecord.senha()));
         usuarioRepository.save(usuario);
     }

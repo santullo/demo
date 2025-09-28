@@ -4,6 +4,7 @@ import com.example.demo.entities.Usuario;
 import com.example.demo.repositories.queries.UsuarioQuery;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+//import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,4 +19,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID> {
 
     @Query(nativeQuery = true, value = UsuarioQuery.BUSCAR_POR_USERNAME)
     Optional<Usuario> findByUsernameOrEmail(String login);
+
 }

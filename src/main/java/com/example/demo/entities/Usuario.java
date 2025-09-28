@@ -1,6 +1,6 @@
 package com.example.demo.entities;
 
-import com.example.demo.enums.SimNaoEnum;
+import com.example.demo.enums.AtivoInativoEnum;
 import com.example.demo.records.UsuarioRecord;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -10,12 +10,15 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.ColumnDefault;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.UUID;
+import java.util.*;
 
 @Data
 @Builder
@@ -23,7 +26,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Entity
 @Table(name = "tb_usuario")
-public class Usuario implements Serializable {
+public class Usuario implements Serializable, UserDetails {
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -57,9 +60,17 @@ public class Usuario implements Serializable {
     private String cpf;
 
     @ColumnDefault("'S'")
-    @Column(name = "ativo", nullable = false, length = 1)
-    @Convert(converter = SimNaoEnum.Mapeador.class)
-    private SimNaoEnum ativo;
+    @Column(name = "status", nullable = false, length = 1)
+    @Convert(converter = AtivoInativoEnum.Mapeador.class)
+    private AtivoInativoEnum status;
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "tb_perfil_usuario",
+            joinColumns = @JoinColumn(name = "usuario_id"),
+            inverseJoinColumns = @JoinColumn(name = "perfil_id")
+    )
+    private List<Perfil> perfis = new ArrayList<>();
 
     public Usuario(UsuarioRecord usuarioRecord) {
         this.nomeCompleto = usuarioRecord.nome();
@@ -68,6 +79,38 @@ public class Usuario implements Serializable {
         this.senha = new BCryptPasswordEncoder().encode(usuarioRecord.senha());
         this.cpf = usuarioRecord.cpf();
         this.criadoEm = LocalDateTime.now();
-        this.ativo = SimNaoEnum.SIM;
+        this.status = AtivoInativoEnum.ATIVO;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return perfis.stream()
+                .map(perfil -> new SimpleGrantedAuthority(perfil.getNome()))
+                .toList();
+    }
+
+    @Override
+    public String getPassword() {
+        return senha;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return UserDetails.super.isAccountNonExpired();
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return UserDetails.super.isAccountNonLocked();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return UserDetails.super.isCredentialsNonExpired();
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return UserDetails.super.isEnabled();
     }
 }

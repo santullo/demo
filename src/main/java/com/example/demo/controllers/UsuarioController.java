@@ -1,10 +1,12 @@
 package com.example.demo.controllers;
 
 import com.example.demo.dtos.UsuarioDTO;
+import com.example.demo.records.UsuarioLoginRecord;
 import com.example.demo.records.UsuarioRecord;
 import com.example.demo.services.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -42,5 +44,11 @@ public class UsuarioController {
                 .buildAndExpand(usuarioCriado.getId())
                 .toUri();
         return ResponseEntity.created(locacation).body(usuarioCriado);
+    }
+
+    @PutMapping("/alterar-senha")
+    public ResponseEntity<String> alterarSenha(@RequestBody @Validated UsuarioLoginRecord usuarioLoginRecord) {
+        usuarioService.alterarSenha(usuarioLoginRecord);
+        return ResponseEntity.ok("Senha alterada");
     }
 }
